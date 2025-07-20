@@ -21,7 +21,6 @@ class roleHarvester {
 
         if (creep.store.getFreeCapacity() > 0) {
             let errCode = creep.harvest(Game.getObjectById(creep.memory.mine));
-            Game.map.visual.clear();
 
             if (errCode == ERR_NOT_ENOUGH_RESOURCES) {
                 creep.say("😴");
@@ -37,7 +36,8 @@ class roleHarvester {
         else {
             // only do if full
 
-            // is there a collector? If no, bring back resources
+            
+            // count assigned Collectors
             let numMyCollectors = 0;
             for (let pos of creep.room.memory.energySources[creep.memory.mine].availablePositions) {
                 if (pos.RoomPosition.x == creep.memory.miningSpot.x && pos.RoomPosition.y == creep.memory.miningSpot.y) {
@@ -51,6 +51,8 @@ class roleHarvester {
                     break;
                 }
             }
+
+            // is there a collector? If no, bring back resources and store in spawn or extensions
             if (numMyCollectors == 0 || creep.pos.getRangeTo(creep.memory.miningSpot.x, creep.memory.miningSpot.y) >= 1) {
                 for (let roomSpawnName in Game.spawns) {
                     let roomSpawn = Game.spawns[roomSpawnName];
@@ -78,16 +80,61 @@ class roleHarvester {
                 }
 
                 let myStructures = creep.room.find(FIND_STRUCTURES);
-                let myExtensions = _.filter(myStructures, (element) => element.structureType == STRUCTURE_EXTENSION);
+                let myExtensions = _.filter(myStructures, (element) => element.structureType == STRUCTURE_EXTENSION && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
                 if (myExtensions != undefined && myExtensions.length > 0) {
                     if (roleCollector.useStorages(creep, myExtensions) == 1) {
                         return;
                     }
                 }
             }
+            
+            // transfer resources to nearby storages
+            let nearStructures = creep.pos.findInRange(FIND_STRUCTURES, 2);
+            let nearContainers = _.filter(nearStructures, (element) => element.structureType == STRUCTURE_CONTAINER);
+            
+            if (nearContainers.length > 0) {
+                for (let container of nearContainers) {
+                    if (container.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                        let error = creep.transfer(container, RESOURCE_ENERGY);
+
+                        if (error != 0) {
+                            console.log("error in trasfered energy to container: " + error);
+                        }
+                        return;
+                    }
+                }
+            }
+
+            let nearLinks = _.filter(nearStructures, (element) => element.structureType == STRUCTURE_LINK);
+            if (nearLinks.length > 0) {
+                for (let link of nearLinks) {
+                    if (link.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                        let error = creep.transfer(link, RESOURCE_ENERGY);
+                        if (error != 0) {
+                            console.log("error in trasfered energy to link: " + error);
+                        }
+                        return;
+                    }
+                }
+            }
+
+            let nearCreeps = creep.pos.findInRange(FIND_MY_CREEPS , 2);
+            let nearCollectors = _.filter(nearCreeps, (element) => element.memory.role == SpawningBehaviour.CREEP_TYPE.COLLECTOR);
+            if (nearCollectors.length > 0) {
+                for (let collector of nearCollectors) {
+                    if (collector.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                        let error = creep.transfer(collector, RESOURCE_ENERGY);
+                        if (error == ERR_NOT_IN_RANGE) {
+                            continue;
+                        }
+                        else if (error != 0) {
+                            console.log("trasfered energy to collector: " + error);
+                        }
+                        return;
+                    }
+                }
+            }
         }
-        
-        // todo give resource to collector creeps
     }
 
     static delete(creepName) {

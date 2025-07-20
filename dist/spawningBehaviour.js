@@ -195,13 +195,14 @@ class SpawningBehaviour {
             }
         }
 
-        for(let flag = 0; flag < 6; flag ++){
+        // check each "stage", 
+        for(let stage = 0; stage < 6; stage ++){
             for (let sourceId in creepsAtMines) {
                 let creepCount = creepsAtMines[sourceId];
                 let availablePositions = spawn.room.memory.energySources[sourceId].availablePositions;
 
-                if (flag == 0 && creepCount.numHarvester == 0) {
-                    console.log("flag 0");
+                if (stage == 0 && creepCount.numHarvester == 0) {
+                    console.log("spawning stage 0");
                     // spawn miner for unused mine, and put it in the first Position, sice all are free
                     let memory = {
                         miningSpot: availablePositions[0].RoomPosition, 
@@ -214,8 +215,8 @@ class SpawningBehaviour {
                     return;
                 }
 
-                if (flag == 1 && creepCount.numCollectors == 0) {   // numHarvester always > 0 here
-                    console.log("flag 1");
+                if (stage == 1 && creepCount.numCollectors == 0) {   // numHarvester always > 0 here
+                    console.log("spawning stage 1");
                     // determine, which spot to pick
                     // todo it does not work well right now. Always picks the first one.
                     for (let pos of availablePositions) {
@@ -236,8 +237,8 @@ class SpawningBehaviour {
                 }
 
                 // check if there are any workers
-                if (flag == 2 && roomCreepCount.WORKER == 0) {
-                    console.log("flag worker");
+                if (stage == 2 && roomCreepCount.WORKER == 0) {
+                    console.log("spawning stage worker");
                     // spawn worker
                     let memory = {};
                     let creepName = this.createCreep(spawn, SpawningBehaviour.CREEP_TYPE.WORKER, memory);
@@ -246,8 +247,8 @@ class SpawningBehaviour {
                     return;
                 }
 
-                if (flag == 3 && creepCount.numCollectors < creepCount.numHarvester) {
-                    console.log("flag 2");
+                if (stage == 3 && creepCount.numCollectors < creepCount.numHarvester) {
+                    console.log("spawning stage 2");
 
                     for (let pos of availablePositions) {
                         let harversterCount = 0;
@@ -277,8 +278,8 @@ class SpawningBehaviour {
                     }
                 }
 
-                if (flag == 4 && creepCount.numHarvester < spawn.room.memory.energySources[sourceId].availablePositions.length) {
-                    console.log("flag 3");
+                if (stage == 4 && creepCount.numHarvester < spawn.room.memory.energySources[sourceId].availablePositions.length) {
+                    console.log("spawning stage 3");
 
                     // get available position without a harvester in it
                     for (let pos of availablePositions) {
@@ -304,8 +305,8 @@ class SpawningBehaviour {
                 }
                 
                 // todo change this, to if(enough enery income)
-                if (flag == 5 && roomCreepCount.WORKER < 3) {
-                    console.log("flag worker");
+                if (stage == 5 && roomCreepCount.WORKER < 3) {
+                    console.log("spawning stage worker");
                     // spawn worker
                     let memory = {};
                     let creepName = this.createCreep(spawn, SpawningBehaviour.CREEP_TYPE.WORKER, memory);

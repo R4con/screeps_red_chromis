@@ -5,6 +5,12 @@
 This is my Screeps Bot, called "Red Chromis". It is still under development.
 Currently it can setup itself, when starting in a new Room, up until RCL 4.
 
+### Features
+
+* automatically places new buildings (roads, expansions, a Tower, a Storage container).
+* automatically adjusts creep bodies.
+* basic defence agains invaders.
+
 ### Problems
 
 * Buildings are not rebuild, when destroyed

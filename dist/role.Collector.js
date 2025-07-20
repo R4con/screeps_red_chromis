@@ -25,17 +25,8 @@ class roleCollector {
             let rangeToCollector = creep.pos.getRangeTo(creep.memory.collectorSpot.x, creep.memory.collectorSpot.y);
             
             if (rangeToCollector <= 1) {
-                // collect from creep
-                let objectsAtPos = creep.room.lookAt(creep.memory.collectorSpot.x, creep.memory.collectorSpot.y);
-                let harvesterCreep = objectsAtPos.find((element) => element.type == "creep");
-
-                if (harvesterCreep != undefined) {
-                    harvesterCreep.creep.transfer(creep, RESOURCE_ENERGY);
-                }
-                else {
-                    // wait for creep
-                    return;
-                }
+                // wait and get the resources
+                // todo get resources from nearby storage
             }
             else {
                 creep.moveTo(creep.memory.collectorSpot.x, creep.memory.collectorSpot.y);
@@ -81,7 +72,7 @@ class roleCollector {
             }
             
             
-            let myExtensions = _.filter(myStructures,(element) => element.structureType == STRUCTURE_EXTENSION);
+            let myExtensions = _.filter(myStructures,(element) => element.structureType == STRUCTURE_EXTENSION && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
             if (myExtensions != undefined && myExtensions.length > 0) {
                 if (roleCollector.useStorages(creep, myExtensions) == 1) {
                     return;
@@ -89,21 +80,21 @@ class roleCollector {
             }
 
             // todo filter out unimportant stuff from myStructures, so the search is quicker
-            let myStorages = _.filter(myStructures,(element) => element.structureType == STRUCTURE_STORAGE);
+            let myStorages = _.filter(myStructures,(element) => element.structureType == STRUCTURE_STORAGE && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
             if (myStorages != undefined && myStorages.length > 0) {
                 if (roleCollector.useStorages(creep, myStorages) == 1) {
                     return;
                 }
             }
 
-            let myTowers = _.filter(myStructures, (element) => element.structureType == STRUCTURE_TOWER);
+            let myTowers = _.filter(myStructures, (element) => element.structureType == STRUCTURE_TOWER && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
             if (myTowers != undefined && myTowers.length > 0) {
                 if (roleCollector.useStorages(creep, myTowers) == 1) {
                     return;
                 }
             }
 
-            let myContainers = _.filter(myStructures,(element) => element.structureType == STRUCTURE_CONTAINER);
+            let myContainers = _.filter(myStructures,(element) => element.structureType == STRUCTURE_CONTAINER && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
             if (myContainers != undefined && myContainers.length > 0) {    // && myContainer[RESOURCE_ENERGY] != undefined
                 if (roleCollector.useStorages(creep, myContainers) == 1) {
                     return;
@@ -116,33 +107,34 @@ class roleCollector {
     }
     
     static useStorages(creep, storageContainers) {
-        for (let container of storageContainers) {
-            if (container.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
-                let errCode = creep.transfer(container, RESOURCE_ENERGY);
+        // do this before let storageContainers = _.filter(myStructures,(element) => element.structureType == STRUCTURE_CONTAINER && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
+        let container = creep.pos.findClosestByRange(storageContainers);
 
-                if (errCode == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(container);
-                    if (creep.saying == "🤔" && creep.store.getUsedCapacity() > 0) {
-                        creep.say("🤔");
-                    }
-                    return 1;
-                }
-                else if (errCode == ERR_NOT_ENOUGH_RESOURCES) {
-                    // idk, why this happens, but it is not a big issue
-                    continue;
-                }
-                else if (errCode != OK) {
-                    console.log("other error in Collector (2): " + errCode);
-                }
-                else {
-                    // all good, transfer worked
-                    if (creep.store.getUsedCapacity() > 0) {
-                        creep.say("🤔");
-                    }
-                    return 1;
-                }
+        //for (let container of storageContainers) {
+        let errCode = creep.transfer(container, RESOURCE_ENERGY);
+
+        if (errCode == ERR_NOT_IN_RANGE) {
+            creep.moveTo(container);
+            if (creep.saying == "🤔" && creep.store.getUsedCapacity() > 0) {
+                creep.say("🤔");
             }
+            return 1;
         }
+        else if (errCode == ERR_NOT_ENOUGH_RESOURCES) {
+            // idk, why this happens, but it is not a big issue
+            return 1;
+        }
+        else if (errCode != OK) {
+            console.log("other error in Collector (2): " + errCode);
+        }
+        else {
+            // all good, transfer worked
+            if (creep.store.getUsedCapacity() > 0) {
+                creep.say("🤔");
+            }
+            return 1;
+        }
+        //}
         return 0;
     }
 

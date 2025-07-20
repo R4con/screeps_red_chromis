@@ -1,6 +1,6 @@
 const MyRoom = require('myRoom');
 const SpawningBehaviour = require('spawningBehaviour').SpawningBehaviour;
-const CreepController = require('creepController');
+const CreepController = require('creepController').CreepController;
 const ActiveBuildings = require('ActiveBuildings');
 
 /*
