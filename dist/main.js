@@ -13,10 +13,15 @@ const ActiveBuildings = require('ActiveBuildings');
 
 
 -todo   low prio change memory, so available positions is a object {} with x,y as keys and no array []
- todo   code basic  defence script
-        - spawn creep with attack, that can kill the attacker
-        - shoot towers at the attacker
+ todo   change collector and harvester behaviour at RCL 4 or 5.
+            - only 1 harvester required per mine
+            - multiple collectors should distribute to/from storages
+ todo   track, when collector or worker creeps are at a tile without a road. Build roads, if often visited
+ todo   plan and build roads only after the extensions are build, so the roads will be used for planning
+ todo   implement recovery, in case of accidental memory deletion
  todo   save the center base coords somewhere (use in MyRoom.checkBuildLocation)
+
+ - at 5 work/harvester only 1 harvester / mine is requred to mine the 3000 energy every 300 ticks (5work = 10 energy/tick)
 */
 
 module.exports.loop = function () {

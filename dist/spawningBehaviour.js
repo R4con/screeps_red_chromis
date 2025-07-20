@@ -130,11 +130,6 @@ class SpawningBehaviour {
             return;
         }
 
-        if (spawn.room.energyAvailable != spawn.room.energyCapacityAvailable) {
-            return;
-        }
-
-
         // count active creeps:
         // only necesarry for Worker
         let roomCreepCount = {
@@ -168,6 +163,10 @@ class SpawningBehaviour {
             }
         }
 
+        if (spawn.room.energyAvailable != spawn.room.energyCapacityAvailable && roomCreepCount.HARVESTER != 0) {
+            return;
+        }
+
         if (roomCreepCount.DEFENDER < 2 && spawn.room.find(FIND_HOSTILE_CREEPS).length > 0) {
             console.log("Defend me!");
             this.createCreep(spawn, SpawningBehaviour.CREEP_TYPE.DEFENDER, {});
@@ -196,7 +195,6 @@ class SpawningBehaviour {
             }
         }
 
-        let rcl = spawn.room.controller.level;
         for(let flag = 0; flag < 6; flag ++){
             for (let sourceId in creepsAtMines) {
                 let creepCount = creepsAtMines[sourceId];

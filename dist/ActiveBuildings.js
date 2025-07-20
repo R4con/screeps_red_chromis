@@ -13,6 +13,10 @@ class ActiveBuildings {
     }
 
     static runTowers(tower) {
+        if (tower.store.getUsedCapacity(RESOURCE_ENERGY) < 10) {
+            return;
+        }
+
         // attack enemies, if there are any
         //let hostile_creeps = Room.find(FIND_HOSTILE_CREEPS);
         let closest_hostile_creep = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);

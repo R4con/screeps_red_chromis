@@ -153,7 +153,7 @@ class MyRoom {
         // determine where to build roads maybe from spawn to mines and room controller?
         let rcl = room.controller.level;
 
-        if (room.memory.building.buildQueue.length != 0) {  //? && rcl < 2 => skip for now, to allow testing
+        if (room.memory.building.buildQueue.length > 0) {  //? && rcl < 2 => skip for now, to allow testing
             // build next building from queue first
             let constructionSites = room.find(FIND_CONSTRUCTION_SITES);
             if (constructionSites != undefined && constructionSites.length == 0) {
@@ -166,7 +166,10 @@ class MyRoom {
                     console.log(`already a building at that spot. Removing ${newBuilding.structure} at {x:${newBuilding.x}, y:${newBuilding.y}}`);
                     room.memory.building.buildQueue.pop();
                 }
-                if (errCode != 0) {
+                else if (errCode == ERR_RCL_NOT_ENOUGH) {
+                    console.log("RCL to low to build: " + newBuilding.structure);
+                }
+                else if (errCode != 0) {
                     console.log("error in MyRoom.build: " + errCode + " " + newBuilding.structure);
                 }
                 else {
@@ -177,6 +180,13 @@ class MyRoom {
                 }
             }
             return;
+        } else if (room.memory.building.buildQueue.length == 0 
+            && room.controller.level == room.memory.building.desiredRoomLevel 
+            && room.controller.ticksToDowngrade <= 9000
+            && room.controller.level < 8) {
+            // todo check room rcl should be upgraded
+            console.log("ready to upgrade rcl");
+            room.memory.building.desiredRoomLevel += 1;
         }
 
         // build roads
