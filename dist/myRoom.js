@@ -184,6 +184,16 @@ class MyRoom {
         let spawn = room.find(FIND_MY_SPAWNS)[0];      
         
         // check if a building got destroyed, add to build queue, if it was
+        for (let finishedBuilding of room.memory.building.finishedBuildings) {
+            let stffAt = room.lookAt(finishedBuilding.x, finishedBuilding.y);
+            let structuresAt = _.filter(stffAt,(element) => element.type == 'structure');
+            // todo index [0] does only work, when there is only a single structure per tile
+            if (!(structuresAt[0].structure.structureType == finishedBuilding.structure || structuresAt[0].structure.structureType == LOOK_CONSTRUCTION_SITES)) {
+                //console.log(finishedBuilding.structure, JSON.stringify(structuresAt));
+                console.log("Building got destroyed at x:" + finishedBuilding.x + " y:" + finishedBuilding.y + "! The " + finishedBuilding.structure + " has to be rebuild.");
+            }
+        }
+
 
         // build structures depending on level
         if (rcl >= 1 && room.memory.building.buildingStage == 0) {

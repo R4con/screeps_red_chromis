@@ -98,7 +98,25 @@ module.exports.loop = function () {
 
         //? visualize buildqueue
         for (let item of Game.rooms[roomName].memory.building.buildQueue) {
-            Game.rooms[roomName].visual.circle(item.x, item.y);
+            let roomVisual = {
+                "radius":0.15,
+                "fill":"#ffffff",
+                "opacity":0.5,
+            };
+
+            switch (item.structure) {
+                case STRUCTURE_ROAD:
+                    roomVisual.fill = "#aaaaaa";
+                    break;
+                case STRUCTURE_EXTENSION:
+                    roomVisual.fill = "#eec000";
+                    break;
+                default:
+                    roomVisual = "#50d0c0";
+                    break;
+            }
+
+            Game.rooms[roomName].visual.circle(item.x, item.y, roomVisual);
         }
     }
 

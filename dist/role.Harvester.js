@@ -1,4 +1,5 @@
-const SpawningBehaviour = require('spawningBehaviour');
+const SpawningBehaviour = require('spawningBehaviour').SpawningBehaviour;
+const roleCollector = require('role.Collector');
 
 /*
  What it should do:
@@ -61,10 +62,26 @@ class roleHarvester {
                             creep.moveTo(roomSpawn);
                             creep.say("🐢");
                         }
+                        else if (errCode == ERR_FULL) {
+                            continue;
+                        }
                         else if (errCode != 0) {
                             console.log("other error in Harvester (2): " + errCode);
                         }
-                        break;
+                        else {
+                            if (creep.store.getUsedCapacity() > 0) {
+                                creep.say("🤔");
+                            }
+                            return;
+                        }
+                    }
+                }
+
+                let myStructures = creep.room.find(FIND_STRUCTURES);
+                let myExtensions = _.filter(myStructures, (element) => element.structureType == STRUCTURE_EXTENSION);
+                if (myExtensions != undefined && myExtensions.length > 0) {
+                    if (roleCollector.useStorages(creep, myExtensions) == 1) {
+                        return;
                     }
                 }
             }

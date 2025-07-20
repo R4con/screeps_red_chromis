@@ -161,6 +161,41 @@ class roleWorker {
         }
         else {
             // do something with the energy
+            // prevent controller from downgrading
+            if (creep.room.controller != undefined && (creep.room.controller.ticksToDowngrade < 1000)) {
+                let errCode = creep.upgradeController(creep.room.controller, RESOURCE_ENERGY);
+                if (errCode == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(creep.room.controller);
+                }
+                else if (errCode != 0) {
+                    console.log("other error in Worker (6_1): " + errCode);
+                }
+                return;
+            }
+
+            //repair structures
+            // todo add target to memory, so it gets repaired to 90% or something, and not just 50%.
+            let repairTargets = creep.room.find(FIND_STRUCTURES, {
+                filter: object => object.hits < object.hitsMax*0.5
+            });
+            
+            if (repairTargets.length > 0) {
+                let targetList = repairTargets.sort((a,b) => (a.hits - b.hits)).slice(0,6);   //of the 6 with the lowest hitpoints
+                let target = creep.pos.findClosestByRange(targetList);                      //choose the closest one
+
+                if(target != undefined) {
+                    let errCode = creep.repair(target);
+                    if (errCode == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(target);
+                    }
+                    else if (errCode != 0) {
+                        console.log("other error in Worker (5): " + errCode);
+                    }
+                    return;
+                }
+            }
+
+            // build structures
             let constructionSites = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
             if (constructionSites != undefined && constructionSites.length > 0) {
                 let closestSite = creep.pos.findClosestByRange(constructionSites);
@@ -175,34 +210,14 @@ class roleWorker {
                 return;
             }
 
-            //repair structures
-            // todo add target to memory, so it gets repaired to 90% or something, and not just 50%.
-            let repairTargets = creep.room.find(FIND_STRUCTURES, {
-                filter: object => object.hits < object.hitsMax*0.5
-            });
-            
-            let targetList = repairTargets.sort((a,b) => (a.hits - b.hits)).slice(0,6);   //of the 6 with the lowest hitpoints
-            let target = creep.pos.findClosestByRange(targetList);                      //choose the closest one
-
-            if(target != undefined) {
-                let errCode = creep.repair(target);
-                if (errCode == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(target);
-                }
-                else if (errCode != 0) {
-                    console.log("other error in Worker (5): " + errCode);
-                }
-                return;
-            }
-
             // if nothing else to do, upgrade controller
-            if (creep.room.controller != undefined && ( creep.room.controller.level < creep.room.memory.building.desiredRoomLevel || creep.room.controller.ticksToDowngrade < 1000)) {
+            if (creep.room.controller != undefined && creep.room.controller.level < creep.room.memory.building.desiredRoomLevel) {
                 let errCode = creep.upgradeController(creep.room.controller, RESOURCE_ENERGY);
                 if (errCode == ERR_NOT_IN_RANGE) {
                     creep.moveTo(creep.room.controller);
                 }
                 else if (errCode != 0) {
-                    console.log("other error in Worker (5): " + errCode);
+                    console.log("other error in Worker (6_1): " + errCode);
                 }
                 return;
             }
