@@ -20,6 +20,7 @@ const ActiveBuildings = require('ActiveBuildings');
  todo   plan and build roads only after the extensions are build, so the roads will be used for planning
  todo   implement recovery, in case of accidental memory deletion
  todo   save the center base coords somewhere (use in MyRoom.checkBuildLocation)
+ todo   spawn new creep before they die
 
  - at 5 work/harvester only 1 harvester / mine is requred to mine the 3000 energy every 300 ticks (5work = 10 energy/tick)
 */

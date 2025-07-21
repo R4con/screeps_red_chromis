@@ -3,8 +3,6 @@ What it should do:
 - collect energy from the ground and miners
 - collect energy from storage (if nesesarry)
 -> put in into spawnwer / extension / Turret / storage
-
-todo collect from every mining creep
 */
 class roleCollector {
     /** @param {Creep} creep **/
@@ -18,6 +16,64 @@ class roleCollector {
             return;
         }
 
+        // collect dropped energy, if nearby and enough
+        let droppedEnergyPiles = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 5, (element) => 
+            element.resourceType == RESOURCE_ENERGY && 
+            element.amount > 200
+        );
+        let closestEnergyPile = undefined;
+        if (droppedEnergyPiles.length > 0) {
+            closestEnergyPile = creep.pos.findClosestByRange(droppedEnergyPiles);
+        }
+        
+        if (closestEnergyPile != undefined && creep.store.getFreeCapacity() > 0 && creep.saying != "🤔" && closestEnergyPile.amount > 200) {
+            creep.say("⚡");
+
+            // goto pile, and collect it
+            let errCode = creep.pickup(closestEnergyPile);
+
+            if (errCode == ERR_NOT_IN_RANGE) {
+                creep.moveTo(closestEnergyPile);
+            }
+            else if (errCode != 0) {
+                console.log("other error in Collector (energyPile): " + errCode);
+            }
+            return;
+        }
+
+        let deadCreep = creep.pos.findInRange(FIND_TOMBSTONES, 5, (element) => 
+            element.store != undefined &&
+            element.store.getUsedCapacity(RESOURCE_ENERGY) > 200
+        );
+        let destroyedStructures = creep.pos.findInRange(FIND_RUINS, 5, (element) => 
+            element.store != undefined &&
+            element.store.getUsedCapacity(RESOURCE_ENERGY) > 200
+        );
+        let closestDeadStore = undefined;
+        if (deadCreep.length > 0) {
+            closestDeadStore = creep.pos.findClosestByRange(deadCreep);
+        }
+        else if (destroyedStructures.length > 0) {
+            closestDeadStore = creep.pos.findClosestByRange(destroyedStructures);
+        }
+        if (closestDeadStore != undefined && creep.store.getFreeCapacity() > 0 && creep.saying != "🤔" && closestDeadStore.store.getUsedCapacity(RESOURCE_ENERGY) > 200) {
+            creep.say("⚒️");
+
+            // goto destroyed store object, and collect its resources
+            let errCode = creep.withdraw(closestDeadStore, RESOURCE_ENERGY);
+
+            if (errCode == ERR_NOT_IN_RANGE) {
+                creep.moveTo(closestDeadStore);
+            }
+            else if (errCode == ERR_NOT_ENOUGH_RESOURCES) {
+                // idk why this happens
+            }
+            else if (errCode != 0) {
+                console.log("other error in Collector (Tomb/Ruin): " + errCode);
+            }
+            return;
+        }
+        
         // collect from miners at that mine and bring back to base
         if (creep.store.getFreeCapacity() > 0 && creep.saying != "🤔") {
             // todo not optimal, will *only* transfer to storage, when full

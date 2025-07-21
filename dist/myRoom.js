@@ -74,7 +74,7 @@ class MyRoom {
 
     static pushBuildQueue(room, newBuilding) {
         if (room.lookForAt(LOOK_CONSTRUCTION_SITES, newBuilding.x, newBuilding.y).length == 0 && 
-            room.lookForAt(LOOK_STRUCTURES, newBuilding.x, newBuilding.y).length == 0 &&
+            (room.lookForAt(LOOK_STRUCTURES, newBuilding.x, newBuilding.y).length == 0 || room.lookForAt(LOOK_RUINS, newBuilding.x, newBuilding.y).length > 0) && 
             room.memory.building.buildQueue.find((element) => element.x == newBuilding.x && element.y == newBuilding.y) == undefined) {
             
             // insert new positions in front, 'cause the last ones are build first
@@ -146,6 +146,14 @@ class MyRoom {
         }
     }
 
+    static destroyBuilding(room, building) {
+        building.destroy();
+
+        // delete from finished buildings
+        room.memory.building.finishedBuildings = room.memory.building.finishedBuildings.filter((element) => element.x != building.pos.x || element.y != building.pos.y || element.structure != building.structureType);
+        console.log("Deleted Building: " + building.structureType + " at x:" + building.pos.x + " y:" + building.pos.y);
+    }
+
     /** @param {Room} room **/
     static build(room) {
         // determine, what to build next, and build construction sites there
@@ -169,6 +177,10 @@ class MyRoom {
                 else if (errCode == ERR_RCL_NOT_ENOUGH) {
                     console.log("RCL to low to build: " + newBuilding.structure);
                 }
+                else if (errCode == -10) {
+                    console.log("error in MyRoom.build: " + errCode + " " + newBuilding.structure);
+                    console.log("x: " + newBuilding.x + " y:" + newBuilding.y + " struc:" + newBuilding.structure);
+                }
                 else if (errCode != 0) {
                     console.log("error in MyRoom.build: " + errCode + " " + newBuilding.structure);
                 }
@@ -182,7 +194,7 @@ class MyRoom {
             return;
         } else if (room.memory.building.buildQueue.length == 0 
             && room.controller.level == room.memory.building.desiredRoomLevel 
-            && room.controller.ticksToDowngrade <= 9000
+            && room.controller.ticksToDowngrade <= 9000 //spawns with 10k ticks, when just upgraded, and will not be maintained until <5k ticks
             && room.controller.level < 8) {
             // todo check room rcl should be upgraded
             console.log("ready to upgrade rcl");
@@ -195,12 +207,14 @@ class MyRoom {
         
         // check if a building got destroyed, add to build queue, if it was
         for (let finishedBuilding of room.memory.building.finishedBuildings) {
-            let stffAt = room.lookAt(finishedBuilding.x, finishedBuilding.y);
-            let structuresAt = _.filter(stffAt,(element) => element.type == 'structure');
+            let structuresAt = room.lookForAt(LOOK_STRUCTURES, finishedBuilding.x, finishedBuilding.y);
+            let constructionSiteAt = room.lookForAt(LOOK_CONSTRUCTION_SITES, finishedBuilding.x, finishedBuilding.y);
+
             // todo index [0] does only work, when there is only a single structure per tile
-            if (!(structuresAt[0].structure.structureType == finishedBuilding.structure || structuresAt[0].structure.structureType == LOOK_CONSTRUCTION_SITES)) {
+            if ((structuresAt.length == 0 || structuresAt[0].structureType != finishedBuilding.structure) && constructionSiteAt.length == 0) {
                 //console.log(finishedBuilding.structure, JSON.stringify(structuresAt));
                 console.log("Building got destroyed at x:" + finishedBuilding.x + " y:" + finishedBuilding.y + "! The " + finishedBuilding.structure + " has to be rebuild.");
+                this.pushBuildQueue(room, {x:finishedBuilding.x, y:finishedBuilding.y, structure:finishedBuilding.structure});
             }
         }
 
@@ -330,10 +344,18 @@ class MyRoom {
             }
         }
         else if (rcl >= 4 && room.memory.building.buildingStage == 3) {
-            // todo build replace container with storage
-            
+            // replace container with storage
+            let baseCenter = new RoomPosition(spawn.pos.x, spawn.pos.y-1, room.name);
+
+            this.placeBuildingAround(room, baseCenter.x, baseCenter.y, STRUCTURE_STORAGE);
+
+            let spawnStorage = baseCenter.findInRange(FIND_STRUCTURES, 1);
+            spawnStorage = _.filter(spawnStorage, (element) => element.structureType == STRUCTURE_CONTAINER);
+            this.destroyBuilding(spawnStorage);
+
             for (let i=0;i<2;i++) {
-                // build 2x extension 
+                // build 2x extension
+                // ! not perfect, room.memory.building.buildingStage is set to 4 2x this way
                 // check in a spiral where space is to build. The roads are only second prioraty
                 let distance = room.memory.building.rangeChecked;
                 let center = {x:spawn.pos.x,y:spawn.pos.y-1};
@@ -360,7 +382,7 @@ class MyRoom {
                     }
                     // finished queueing this building step.
                     console.log("Queued buildings for stage 2");
-                    room.memory.building.buildingStage = 3;
+                    room.memory.building.buildingStage = 4;
                 }
                 else {
                     room.memory.building.rangeChecked += 1;

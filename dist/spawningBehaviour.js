@@ -3,6 +3,15 @@
     - determine, what creep to spawn
  */
 
+const MAX_MINERS_RCL = {
+    MIN: 1,
+    MAX: 8,
+    RCL3: 3,
+    RCL4: 2,
+    RCL5: 1,
+};
+const MAX_WORKERS = 4
+
 class SpawningBehaviour {
     static CREEP_TYPE = Object.freeze({
         DEFAULT: "default",
@@ -195,7 +204,7 @@ class SpawningBehaviour {
             }
         }
 
-        // check each "stage", 
+        // check each "stage"
         for(let stage = 0; stage < 6; stage ++){
             for (let sourceId in creepsAtMines) {
                 let creepCount = creepsAtMines[sourceId];
@@ -204,6 +213,7 @@ class SpawningBehaviour {
                 if (stage == 0 && creepCount.numHarvester == 0) {
                     console.log("spawning stage 0");
                     // spawn miner for unused mine, and put it in the first Position, sice all are free
+                    // todo use closest mining spot first
                     let memory = {
                         miningSpot: availablePositions[0].RoomPosition, 
                         mine: sourceId
@@ -279,33 +289,53 @@ class SpawningBehaviour {
                 }
 
                 if (stage == 4 && creepCount.numHarvester < spawn.room.memory.energySources[sourceId].availablePositions.length) {
-                    console.log("spawning stage 3");
+                    let maxMiners;
+                    if (spawn.room.controller.level < 3) {
+                        maxMiners = MAX_MINERS_RCL.MAX;
+                    }
+                    else if (spawn.room.controller.level > 5) {
+                        maxMiners = MAX_MINERS_RCL.MIN;
+                    }
+                    else if (spawn.room.controller.level == 3) {
+                        maxMiners = MAX_MINERS_RCL.RCL3;
+                    }
+                    else if (spawn.room.controller.level == 4) {
+                        maxMiners = MAX_MINERS_RCL.RCL4;
+                    }
+                    else if (spawn.room.controller.level == 5) {
+                        maxMiners = MAX_MINERS_RCL.RCL5;
+                    }
 
-                    // get available position without a harvester in it
-                    for (let pos of availablePositions) {
-                        let har_flag = 0;
-                        for (let creepName of pos.assignedCreeps) {
-                            if (Game.creeps[creepName].memory.role == SpawningBehaviour.CREEP_TYPE.HARVESTER) {
-                                har_flag ++;
+                    if (creepCount.numHarvester < maxMiners) {
+                        console.log("spawning stage 3");
+
+                        // get available position without a harvester in it
+                        for (let pos of availablePositions) {
+                            let har_flag = 0;
+                            for (let creepName of pos.assignedCreeps) {
+                                if (Game.creeps[creepName].memory.role == SpawningBehaviour.CREEP_TYPE.HARVESTER) {
+                                    har_flag ++;
+                                }
                             }
-                        }
 
-                        // if no harvester at that position, put a harvester there
-                        if (har_flag == 0) {
-                            let memory = {
-                                miningSpot: pos.RoomPosition,
-                                mine: sourceId
-                            };
-                            let creepName = this.createCreep(spawn, SpawningBehaviour.CREEP_TYPE.HARVESTER, memory);
-                            pos.assignedCreeps.push(creepName);
-        
-                            return
+                            // if no harvester at that position, put a harvester there
+                            if (har_flag == 0) {
+                                let memory = {
+                                    miningSpot: pos.RoomPosition,
+                                    mine: sourceId
+                                };
+                                let creepName = this.createCreep(spawn, SpawningBehaviour.CREEP_TYPE.HARVESTER, memory);
+                                pos.assignedCreeps.push(creepName);
+            
+                                return
+                            }
                         }
                     }
                 }
                 
                 // todo change this, to if(enough enery income)
                 if (stage == 5 && roomCreepCount.WORKER < 3) {
+                    
                     console.log("spawning stage worker");
                     // spawn worker
                     let memory = {};

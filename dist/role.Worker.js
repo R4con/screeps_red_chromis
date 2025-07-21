@@ -4,6 +4,8 @@
     - harvest until it dies
     - distribute resources to nearby creeps
  */
+const MIN_CONTROLLER_DOWNGRADE_TICKS = 5000;
+
 class roleWorker {
     /** @param {Creep} creep **/
     static run(creep) {
@@ -162,7 +164,7 @@ class roleWorker {
         else {
             // do something with the energy
             // prevent controller from downgrading
-            if (creep.room.controller != undefined && (creep.room.controller.ticksToDowngrade < 1000)) {
+            if (creep.room.controller != undefined && (creep.room.controller.ticksToDowngrade < MIN_CONTROLLER_DOWNGRADE_TICKS)) {
                 let errCode = creep.upgradeController(creep.room.controller, RESOURCE_ENERGY);
                 if (errCode == ERR_NOT_IN_RANGE) {
                     creep.moveTo(creep.room.controller);

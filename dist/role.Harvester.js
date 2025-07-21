@@ -20,6 +20,7 @@ class roleHarvester {
         }
 
         if (creep.store.getFreeCapacity() > 0) {
+            // only mine, if there is space left
             let errCode = creep.harvest(Game.getObjectById(creep.memory.mine));
 
             if (errCode == ERR_NOT_ENOUGH_RESOURCES) {
@@ -32,10 +33,14 @@ class roleHarvester {
             else if (errCode != 0) {
                 console.log("other error in Harvester (1): " + errCode);
             }
+            else {
+                // if harvest was OK
+                // transfer resources to nearby storages
+                roleHarvester.transferEnergyToStorages(creep);
+            }
         }
         else {
-            // only do if full
-
+            // if full, and there is no storage near by, go back yourself
             
             // count assigned Collectors
             let numMyCollectors = 0;
@@ -87,49 +92,64 @@ class roleHarvester {
                     }
                 }
             }
-            
+
             // transfer resources to nearby storages
-            let nearStructures = creep.pos.findInRange(FIND_STRUCTURES, 2);
-            let nearContainers = _.filter(nearStructures, (element) => element.structureType == STRUCTURE_CONTAINER);
-            
-            if (nearContainers.length > 0) {
-                for (let container of nearContainers) {
-                    if (container.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
-                        let error = creep.transfer(container, RESOURCE_ENERGY);
+            if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+                roleHarvester.transferEnergyToStorages(creep);
+            }
+        }
+    }
 
-                        if (error != 0) {
-                            console.log("error in trasfered energy to container: " + error);
-                        }
-                        return;
+    static transferEnergyToStorages(creep) {
+        // transfer resources to nearby storages
+        let nearStructures = creep.pos.findInRange(FIND_STRUCTURES, 2);
+        let nearContainers = _.filter(nearStructures, (element) => element.structureType == STRUCTURE_CONTAINER);
+        
+        if (nearContainers.length > 0) {
+            for (let container of nearContainers) {
+                if (container.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                    let error = creep.transfer(container, RESOURCE_ENERGY);
+
+                    if (error != 0) {
+                        console.log("error in trasfered energy to container: " + error);
                     }
+                    return;
                 }
             }
+        }
 
-            let nearLinks = _.filter(nearStructures, (element) => element.structureType == STRUCTURE_LINK);
-            if (nearLinks.length > 0) {
-                for (let link of nearLinks) {
-                    if (link.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
-                        let error = creep.transfer(link, RESOURCE_ENERGY);
-                        if (error != 0) {
-                            console.log("error in trasfered energy to link: " + error);
-                        }
-                        return;
+        let nearLinks = _.filter(nearStructures, (element) => element.structureType == STRUCTURE_LINK);
+        if (nearLinks.length > 0) {
+            for (let link of nearLinks) {
+                if (link.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                    let error = creep.transfer(link, RESOURCE_ENERGY);
+                    if (error != 0) {
+                        console.log("error in trasfered energy to link: " + error);
                     }
+                    return;
                 }
             }
+        }
 
-            let nearCreeps = creep.pos.findInRange(FIND_MY_CREEPS , 2);
-            let nearCollectors = _.filter(nearCreeps, (element) => element.memory.role == SpawningBehaviour.CREEP_TYPE.COLLECTOR);
-            if (nearCollectors.length > 0) {
-                for (let collector of nearCollectors) {
-                    if (collector.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
-                        let error = creep.transfer(collector, RESOURCE_ENERGY);
-                        if (error == ERR_NOT_IN_RANGE) {
-                            continue;
-                        }
-                        else if (error != 0) {
-                            console.log("trasfered energy to collector: " + error);
-                        }
+        let nearCreeps = creep.pos.findInRange(FIND_MY_CREEPS , 2);
+        let nearCollectors = _.filter(nearCreeps, (element) => element.memory.role == SpawningBehaviour.CREEP_TYPE.COLLECTOR);
+        if (nearCollectors.length > 0) {
+            for (let collector of nearCollectors) {
+                if (collector.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                    let error = creep.transfer(collector, RESOURCE_ENERGY);
+                    if (error == ERR_NOT_IN_RANGE) {
+                        continue;
+                    }
+                    else if (error == ERR_NOT_ENOUGH_RESOURCES) {
+                        // do nothing why does this even happen?
+                        continue;
+                    }
+                    else if (error != 0) {
+                        console.log("error in transfer energy to collector: " + error);
+                        continue;
+                    }
+                    else {
+                        // everything when well
                         return;
                     }
                 }
