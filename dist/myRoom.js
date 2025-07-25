@@ -344,6 +344,8 @@ class MyRoom {
             }
         }
         else if (rcl >= 4 && room.memory.building.buildingStage == 3) {
+            // todo build containers close to each mine, and assign collectors to these instead
+
             // replace container with storage
             let baseCenter = new RoomPosition(spawn.pos.x, spawn.pos.y-1, room.name);
 

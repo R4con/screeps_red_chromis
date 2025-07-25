@@ -21,6 +21,8 @@ const ActiveBuildings = require('ActiveBuildings');
  todo   implement recovery, in case of accidental memory deletion
  todo   save the center base coords somewhere (use in MyRoom.checkBuildLocation)
  todo   spawn new creep before they die
+ 
+ todo build containers close to each mine, and assign collectors to these instead
 
  - at 5 work/harvester only 1 harvester / mine is requred to mine the 3000 energy every 300 ticks (5work = 10 energy/tick)
 */

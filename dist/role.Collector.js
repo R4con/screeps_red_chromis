@@ -41,6 +41,7 @@ class roleCollector {
             return;
         }
 
+        // collect energy from dead creeps or ruins
         let deadCreep = creep.pos.findInRange(FIND_TOMBSTONES, 5, (element) => 
             element.store != undefined &&
             element.store.getUsedCapacity(RESOURCE_ENERGY) > 200
@@ -95,6 +96,13 @@ class roleCollector {
 
             //console.log("1: " + myStorages + " 2: " + myExtensions + " 3: " + myContainers + " " + myContainers.length );
 
+            let myExtensions = _.filter(myStructures,(element) => element.structureType == STRUCTURE_EXTENSION && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
+            if (myExtensions != undefined && myExtensions.length > 0) {
+                if (roleCollector.useStorages(creep, myExtensions) == 1) {
+                    return;
+                }
+            }
+
             for (let spawn of mySpawns) {
                 if (spawn.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
                     let errCode = creep.transfer(spawn, RESOURCE_ENERGY);
@@ -126,26 +134,17 @@ class roleCollector {
                     }
                 }
             }
-            
-            
-            let myExtensions = _.filter(myStructures,(element) => element.structureType == STRUCTURE_EXTENSION && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
-            if (myExtensions != undefined && myExtensions.length > 0) {
-                if (roleCollector.useStorages(creep, myExtensions) == 1) {
-                    return;
-                }
-            }
-
-            // todo filter out unimportant stuff from myStructures, so the search is quicker
-            let myStorages = _.filter(myStructures,(element) => element.structureType == STRUCTURE_STORAGE && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
-            if (myStorages != undefined && myStorages.length > 0) {
-                if (roleCollector.useStorages(creep, myStorages) == 1) {
-                    return;
-                }
-            }
 
             let myTowers = _.filter(myStructures, (element) => element.structureType == STRUCTURE_TOWER && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
             if (myTowers != undefined && myTowers.length > 0) {
                 if (roleCollector.useStorages(creep, myTowers) == 1) {
+                    return;
+                }
+            }
+
+            let myStorages = _.filter(myStructures,(element) => element.structureType == STRUCTURE_STORAGE && element.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
+            if (myStorages != undefined && myStorages.length > 0) {
+                if (roleCollector.useStorages(creep, myStorages) == 1) {
                     return;
                 }
             }
